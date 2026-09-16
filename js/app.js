@@ -165,6 +165,93 @@
 
   document.querySelectorAll('input[type="date"]:not([name="endDate"])').forEach(function(i){ i.value = todayISO(); });
 
+  // ---------- food database (per 100g) for quick macro add ----------
+  var FOOD_DB = [
+    {name:"Pollo (pechuga)", kcal:165, protein:31, fat:3.6, carbs:0, fiber:0},
+    {name:"Pavo (pechuga)", kcal:135, protein:30, fat:1, carbs:0, fiber:0},
+    {name:"Ternera magra", kcal:172, protein:26, fat:7, carbs:0, fiber:0},
+    {name:"Cerdo (lomo)", kcal:143, protein:21, fat:6, carbs:0, fiber:0},
+    {name:"Jamón serrano", kcal:241, protein:31, fat:13, carbs:0, fiber:0},
+    {name:"Atún en lata (natural)", kcal:116, protein:26, fat:1, carbs:0, fiber:0},
+    {name:"Salmón", kcal:208, protein:20, fat:13, carbs:0, fiber:0},
+    {name:"Huevo", kcal:155, protein:13, fat:11, carbs:1.1, fiber:0},
+    {name:"Tofu", kcal:76, protein:8, fat:4.8, carbs:1.9, fiber:0.3},
+    {name:"Queso fresco", kcal:98, protein:11, fat:4.3, carbs:3.4, fiber:0},
+    {name:"Arroz blanco (cocido)", kcal:130, protein:2.7, fat:0.3, carbs:28, fiber:0.4},
+    {name:"Arroz integral (cocido)", kcal:123, protein:2.6, fat:1, carbs:26, fiber:1.8},
+    {name:"Pasta (cocida)", kcal:131, protein:5, fat:1.1, carbs:25, fiber:1.8},
+    {name:"Quinoa (cocida)", kcal:120, protein:4.4, fat:1.9, carbs:21, fiber:2.8},
+    {name:"Pan blanco", kcal:265, protein:9, fat:3.2, carbs:49, fiber:2.7},
+    {name:"Pan integral", kcal:247, protein:13, fat:3.4, carbs:41, fiber:7},
+    {name:"Avena", kcal:389, protein:17, fat:7, carbs:66, fiber:10.6},
+    {name:"Patata (cocida)", kcal:87, protein:1.9, fat:0.1, carbs:20, fiber:1.8},
+    {name:"Lentejas (cocidas)", kcal:116, protein:9, fat:0.4, carbs:20, fiber:8},
+    {name:"Garbanzos (cocidos)", kcal:164, protein:9, fat:2.6, carbs:27, fiber:8},
+    {name:"Humus", kcal:166, protein:8, fat:9.6, carbs:14, fiber:6},
+    {name:"Leche entera", kcal:61, protein:3.2, fat:3.3, carbs:4.8, fiber:0},
+    {name:"Leche desnatada", kcal:34, protein:3.4, fat:0.1, carbs:5, fiber:0},
+    {name:"Yogur natural", kcal:61, protein:3.5, fat:3.3, carbs:4.7, fiber:0},
+    {name:"Yogur griego", kcal:97, protein:9, fat:5, carbs:4, fiber:0},
+    {name:"Aguacate", kcal:160, protein:2, fat:15, carbs:9, fiber:7},
+    {name:"Plátano", kcal:89, protein:1.1, fat:0.3, carbs:23, fiber:2.6},
+    {name:"Manzana", kcal:52, protein:0.3, fat:0.2, carbs:14, fiber:2.4},
+    {name:"Naranja", kcal:47, protein:0.9, fat:0.1, carbs:12, fiber:2.4},
+    {name:"Fresas", kcal:32, protein:0.7, fat:0.3, carbs:7.7, fiber:2},
+    {name:"Tomate", kcal:18, protein:0.9, fat:0.2, carbs:3.9, fiber:1.2},
+    {name:"Lechuga", kcal:15, protein:1.4, fat:0.2, carbs:2.9, fiber:1.3},
+    {name:"Pepino", kcal:15, protein:0.7, fat:0.1, carbs:3.6, fiber:0.5},
+    {name:"Zanahoria", kcal:41, protein:0.9, fat:0.2, carbs:10, fiber:2.8},
+    {name:"Cebolla", kcal:40, protein:1.1, fat:0.1, carbs:9.3, fiber:1.7},
+    {name:"Pimiento", kcal:31, protein:1, fat:0.3, carbs:6, fiber:2.1},
+    {name:"Calabacín", kcal:17, protein:1.2, fat:0.3, carbs:3.1, fiber:1},
+    {name:"Brócoli", kcal:34, protein:2.8, fat:0.4, carbs:7, fiber:2.6},
+    {name:"Espinacas", kcal:23, protein:2.9, fat:0.4, carbs:3.6, fiber:2.2},
+    {name:"Judías verdes", kcal:31, protein:1.8, fat:0.2, carbs:7, fiber:3.4},
+    {name:"Aceite de oliva", kcal:884, protein:0, fat:100, carbs:0, fiber:0},
+    {name:"Mantequilla", kcal:717, protein:0.9, fat:81, carbs:0.1, fiber:0},
+    {name:"Almendras", kcal:579, protein:21, fat:50, carbs:22, fiber:12.5},
+    {name:"Nueces", kcal:654, protein:15, fat:65, carbs:14, fiber:6.7},
+    {name:"Aceitunas", kcal:115, protein:0.8, fat:11, carbs:6, fiber:3.3},
+    {name:"Miel", kcal:304, protein:0.3, fat:0, carbs:82, fiber:0.2},
+    {name:"Azúcar", kcal:387, protein:0, fat:0, carbs:100, fiber:0},
+    {name:"Chocolate negro (70%)", kcal:546, protein:7.8, fat:31, carbs:46, fiber:11},
+    {name:"Zumo de naranja", kcal:45, protein:0.7, fat:0.2, carbs:10.4, fiber:0.2},
+    {name:"Cereales de desayuno", kcal:378, protein:7, fat:0.9, carbs:84, fiber:3}
+  ];
+  (function populateFoodList(){
+    var dl = document.getElementById("foodList");
+    if(!dl) return;
+    dl.innerHTML = FOOD_DB.map(function(f){ return '<option value="'+f.name+'">'; }).join("");
+  })();
+  var foodAddBtn = document.getElementById("foodAddBtn");
+  if(foodAddBtn){
+    foodAddBtn.addEventListener("click", function(){
+      var searchEl = document.getElementById("foodSearch");
+      var gramsEl = document.getElementById("foodGrams");
+      var query = (searchEl.value||"").trim().toLowerCase();
+      var grams = Number(gramsEl.value) || 100;
+      var food = FOOD_DB.find(function(f){ return f.name.toLowerCase()===query; }) ||
+                 FOOD_DB.find(function(f){ return f.name.toLowerCase().indexOf(query)===0; }) ||
+                 FOOD_DB.find(function(f){ return f.name.toLowerCase().indexOf(query)!==-1; });
+      if(!query || !food){
+        showToast(query ? "No encontrado en la base de alimentos" : "Escribe un alimento primero");
+        return;
+      }
+      var factor = grams/100;
+      var form = searchEl.closest("form");
+      ["kcal","protein","fat","carbs","fiber"].forEach(function(k){
+        var input = form.querySelector('[name="'+k+'"]');
+        var current = Number(input.value)||0;
+        var added = food[k]*factor;
+        input.value = Math.round((current+added)*10)/10;
+      });
+      showToast("Añadido: " + food.name + " (" + grams + "g)");
+      searchEl.value = "";
+      gramsEl.value = 100;
+      searchEl.focus();
+    });
+  }
+
   // ---------- forms ----------
   document.querySelectorAll("form.entry").forEach(function(form){
     form.addEventListener("submit", function(e){
@@ -175,6 +262,9 @@
       data.flag = !!form.querySelector('[name="flag"]') && form.querySelector('[name="flag"]').checked;
       if(data.quality) data.quality = Number(data.quality);
       if(data.hours) data.hours = Number(data.hours);
+      ["kcal","protein","fat","carbs","fiber"].forEach(function(k){
+        if(data[k]!==undefined) data[k] = data[k]==="" ? undefined : Number(data[k]);
+      });
       if(type==="cycles"){
         ["symHeadache","symBloating","symFatigue","symMood","symNausea"].forEach(function(name){
           var el = form.querySelector('[name="'+name+'"]');
@@ -672,6 +762,41 @@
     }
   };
 
+  function renderNutritionToday(){
+    var today = todayISO();
+    var meals = state.meals.filter(function(m){ return m.date===today; });
+    var el = document.getElementById("macroSummary");
+    if(!meals.length){
+      el.className = "macro-summary empty";
+      el.textContent = "Aún no has registrado comidas hoy.";
+      return;
+    }
+    var totals = {kcal:0, protein:0, fat:0, carbs:0, fiber:0};
+    var anyMacro = false;
+    meals.forEach(function(m){
+      ["kcal","protein","fat","carbs","fiber"].forEach(function(k){
+        if(m[k]){ totals[k] += Number(m[k]); anyMacro = true; }
+      });
+    });
+    el.className = "macro-summary";
+    if(!anyMacro){
+      el.className = "macro-summary empty";
+      el.textContent = meals.length + " comida" + (meals.length===1?"":"s") + " registrada" + (meals.length===1?"":"s") + " hoy, sin macros añadidos todavía.";
+      return;
+    }
+    var stats = [
+      {lbl:"Kcal", v:Math.round(totals.kcal)},
+      {lbl:"Proteína", v:round1(totals.protein)+"g"},
+      {lbl:"Grasa", v:round1(totals.fat)+"g"},
+      {lbl:"Carbohidratos", v:round1(totals.carbs)+"g"},
+      {lbl:"Fibra", v:round1(totals.fiber)+"g"}
+    ];
+    el.innerHTML = stats.map(function(s){
+      return '<div class="stat"><span class="num">'+s.v+'</span><span class="lbl">'+s.lbl+'</span></div>';
+    }).join("");
+  }
+  function round1(n){ return Math.round(n*10)/10; }
+
   function renderTips(scores){
     var cats = [
       {key:"sleep", v:scores.sleep}, {key:"nutrition", v:scores.nutrition},
@@ -848,6 +973,37 @@
       options:{ responsive:true, scales:{ y:{beginAtZero:true, max:5} } }
     });
 
+    var macroCard = document.getElementById("macroChartCard");
+    var hasMacros = state.meals.some(function(m){ return m.protein || m.fat || m.carbs; });
+    if(hasMacros){
+      macroCard.style.display = "block";
+      var macroByDate = {};
+      state.meals.forEach(function(m){
+        if(!macroByDate[m.date]) macroByDate[m.date] = {protein:0, fat:0, carbs:0};
+        macroByDate[m.date].protein += Number(m.protein)||0;
+        macroByDate[m.date].fat += Number(m.fat)||0;
+        macroByDate[m.date].carbs += Number(m.carbs)||0;
+      });
+      var proteinData = dates.map(function(d){ return macroByDate[d] ? round1(macroByDate[d].protein) : 0; });
+      var fatData = dates.map(function(d){ return macroByDate[d] ? round1(macroByDate[d].fat) : 0; });
+      var carbsData = dates.map(function(d){ return macroByDate[d] ? round1(macroByDate[d].carbs) : 0; });
+      if(charts.macros) charts.macros.destroy();
+      charts.macros = new Chart(document.getElementById("chartMacros"), {
+        type:"bar",
+        data:{
+          labels: dates.map(fmtDate),
+          datasets:[
+            {label:"Proteína (g)", data:proteinData, backgroundColor:ink, stack:"m"},
+            {label:"Grasa (g)", data:fatData, backgroundColor:inkSoft, stack:"m"},
+            {label:"Carbohidratos (g)", data:carbsData, backgroundColor:css("--fill-mid"), stack:"m"}
+          ]
+        },
+        options:{ responsive:true, scales:{ x:{stacked:true}, y:{stacked:true, beginAtZero:true} } }
+      });
+    } else {
+      macroCard.style.display = "none";
+    }
+
     var scores = computeScores(7);
     if(charts.radar) charts.radar.destroy();
     charts.radar = new Chart(document.getElementById("chartRadar"), {
@@ -914,7 +1070,14 @@
 
   function typeMeta(type, entry){
     switch(type){
-      case "meals": return {badge:"NUT", title:(entry.mealType||"Comida"), desc:entry.description};
+      case "meals":
+        var macroBits = [];
+        if(entry.kcal) macroBits.push(Math.round(entry.kcal)+" kcal");
+        if(entry.protein) macroBits.push("P "+entry.protein+"g");
+        if(entry.fat) macroBits.push("G "+entry.fat+"g");
+        if(entry.carbs) macroBits.push("HC "+entry.carbs+"g");
+        if(entry.fiber) macroBits.push("Fibra "+entry.fiber+"g");
+        return {badge:"NUT", title:(entry.mealType||"Comida"), desc:entry.description, macros: macroBits.join(" · ")};
       case "sleep": return {badge:"SUE", title:entry.hours+"h · calidad "+entry.quality+"/5", desc:entry.notes};
       case "supplements": return {badge:"SUP", title:entry.name+(entry.dose?" · "+entry.dose:""), desc:entry.notes};
       case "medical": return {badge:"MED", title:(entry.title||entry.type)+(entry.flag?" · pendiente":""), desc:entry.notes};
@@ -955,6 +1118,7 @@
           '<div class="meta"><span>'+fmtDate(it.entry.date)+'</span>'+(it.entry.time?'<span>'+it.entry.time+'</span>':'')+'</div>' +
           '<div class="title">'+escapeHtml(meta.title||"")+'</div>' +
           (meta.desc ? '<div class="desc">'+escapeHtml(meta.desc)+'</div>' : '') +
+          (meta.macros ? '<div class="meal-macros">'+escapeHtml(meta.macros)+'</div>' : '') +
         '</div>' +
         '<div class="actions"></div>';
       var actions = el.querySelector(".actions");
@@ -988,6 +1152,7 @@
     renderGauge(scores);
     renderCatTiles(scores);
     renderBanner(scores);
+    renderNutritionToday();
     renderTips(scores);
     renderMejoras(scores);
     renderCiclo();

@@ -152,6 +152,22 @@ input[type="checkbox"]{accent-color:var(--ink); width:16px; height:16px;}
 .range-row{display:flex; align-items:center; gap:10px;}
 .range-row output{font-family:'IBM Plex Mono',monospace; font-weight:600; min-width:1.4em; text-align:right;}
 
+.macro-quickadd{
+  display:flex; flex-wrap:wrap; align-items:flex-end; gap:10px;
+  padding:12px; border:1px dashed var(--line); border-radius:6px; background:var(--surface-2);
+}
+.macro-quickadd label:first-child{flex:1 1 200px;}
+.macro-quickadd label:nth-child(2){flex:0 0 110px;}
+.macro-row{grid-template-columns:repeat(auto-fit,minmax(110px,1fr));}
+
+.macro-summary{display:flex; flex-wrap:wrap; gap:22px;}
+.macro-summary .stat{display:flex; flex-direction:column; gap:2px;}
+.macro-summary .stat .num{font-family:'Instrument Serif',serif; font-style:italic; font-size:1.5rem;}
+.macro-summary .stat .lbl{font-family:'IBM Plex Mono',monospace; font-size:.64rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint);}
+.macro-summary.empty{color:var(--ink-faint); font-size:.85rem; font-style:italic; font-family:'Instrument Serif',serif;}
+
+.meal-macros{font-family:'IBM Plex Mono',monospace; font-size:.72rem; color:var(--ink-faint); margin-top:4px;}
+
 .subtabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
 .subtabs button{
   font-family:'IBM Plex Mono',monospace; font-size:.68rem; font-weight:600; letter-spacing:.05em;

@@ -50,6 +50,11 @@
     <div id="alertBanner"></div>
 
     <div class="card" style="margin-top:14px;">
+      <div class="section-title"><h2 style="font-size:1.15rem;">Nutrición de hoy</h2></div>
+      <div class="macro-summary" id="macroSummary"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
       <div class="section-title">
         <h2>Prioridades</h2>
         <button class="btn link" id="goMejoras">Ver todas las mejoras →</button>
@@ -83,6 +88,24 @@
         <label>Calidad percibida
           <span class="range-row"><input type="range" name="quality" min="1" max="5" value="3"><output>3</output></span>
         </label>
+
+        <div class="macro-quickadd">
+          <label>Buscar alimento
+            <input type="text" id="foodSearch" list="foodList" placeholder="Ej. pollo, arroz, aguacate...">
+            <datalist id="foodList"></datalist>
+          </label>
+          <label>Cantidad (g) <input type="number" id="foodGrams" min="1" step="1" value="100"></label>
+          <button type="button" class="btn ghost small" id="foodAddBtn">+ Añadir a la comida</button>
+        </div>
+
+        <div class="field-row macro-row">
+          <label>Kcal <input type="number" name="kcal" min="0" step="any"></label>
+          <label>Proteínas (g) <input type="number" name="protein" min="0" step="any"></label>
+          <label>Grasas (g) <input type="number" name="fat" min="0" step="any"></label>
+          <label>Carbohidratos (g) <input type="number" name="carbs" min="0" step="any"></label>
+          <label>Fibra (g) <input type="number" name="fiber" min="0" step="any"></label>
+        </div>
+
         <div><button type="submit" class="btn">Guardar comida</button></div>
       </form>
 
@@ -225,6 +248,10 @@
       <div class="card chart-card">
         <div class="chart-title">Calidad media de comidas por día · 14 días</div>
         <canvas id="chartMeals" height="220"></canvas>
+      </div>
+      <div class="card chart-card" id="macroChartCard" style="display:none;">
+        <div class="chart-title">Macros por día · 14 días</div>
+        <canvas id="chartMacros" height="220"></canvas>
       </div>
       <div class="card chart-card" id="cycleChartCard" style="display:none;">
         <div class="chart-title">Duración de los últimos ciclos</div>
