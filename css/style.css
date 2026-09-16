@@ -256,6 +256,17 @@ input[type="checkbox"]{accent-color:var(--ink); width:16px; height:16px;}
 .mtc-block .mtc-title .tag{margin-left:auto;}
 .mtc-disclaimer{font-size:.74rem; color:var(--ink-faint); font-style:italic; font-family:'Instrument Serif',serif; margin-bottom:6px;}
 
+.phase-edu-list{display:flex; flex-direction:column;}
+.phase-edu-item{display:flex; gap:14px; padding:16px 2px; border-top:1px solid var(--line); align-items:flex-start;}
+.phase-edu-item:first-child{border-top:none;}
+.phase-edu-item .mascot{flex:0 0 auto; width:52px;}
+.phase-edu-item .mascot svg{width:100%; height:auto;}
+.phase-edu-item .body{flex:1; min-width:0;}
+.phase-edu-item .head{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:4px;}
+.phase-edu-item .head h3{font-family:'Instrument Serif',serif; font-style:italic; font-weight:400; font-size:1.15rem; margin:0;}
+.phase-edu-item .range{font-family:'IBM Plex Mono',monospace; font-size:.68rem; color:var(--ink-faint); letter-spacing:.04em;}
+.phase-edu-item p{margin:0; font-size:.87rem; line-height:1.55; color:var(--ink-soft);}
+
 @media (max-width:480px){
   header.topbar h1{font-size:1.5rem;}
   .card{padding:15px;}

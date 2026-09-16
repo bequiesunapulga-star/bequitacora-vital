@@ -21,6 +21,7 @@
     <button role="tab" aria-selected="true" data-view="hoy">Hoy</button>
     <button role="tab" aria-selected="false" data-view="registrar">Registrar</button>
     <button role="tab" aria-selected="false" data-view="ciclo">Ciclo</button>
+    <button role="tab" aria-selected="false" data-view="mtc">MTC</button>
     <button role="tab" aria-selected="false" data-view="stats">Estadísticas</button>
     <button role="tab" aria-selected="false" data-view="mejoras">Mejoras</button>
     <button role="tab" aria-selected="false" data-view="historial">Historial</button>
@@ -174,7 +175,15 @@
     </div>
 
     <div class="card" style="margin-top:14px;">
-      <div class="section-title"><h2 style="font-size:1.15rem;">Medicina Tradicional China</h2></div>
+      <div class="section-title"><h2 style="font-size:1.15rem;">Las fases de tu ciclo</h2></div>
+      <div class="phase-edu-list" id="phaseEduList"></div>
+    </div>
+  </section>
+
+  <!-- MTC -->
+  <section class="view" id="view-mtc">
+    <div class="card">
+      <div class="section-title"><h2>Medicina Tradicional China</h2></div>
       <div class="mtc-disclaimer">Contenido cultural de bienestar basado en la tradición, no un tratamiento médico. Ante cualquier duda de salud, consulta a un profesional.</div>
       <div class="mtc-block" id="mtcPhase" style="display:none;"></div>
       <div class="mtc-block" id="mtcSeason"></div>

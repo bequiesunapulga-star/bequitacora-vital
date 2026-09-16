@@ -242,24 +242,28 @@
     menstrual: {
       name:"Fase Sangre", short:"Menstrual", colorVar:"--phase-menstrual",
       desc:"Los niveles hormonales están en su punto más bajo. El cuerpo suele pedir descanso, calor y calma.",
+      edu:"El revestimiento del útero se desprende: es tu periodo. Estrógeno y progesterona están en su punto más bajo del ciclo. Es común notar menos energía, molestias abdominales o mayor sensibilidad — y también es normal no notar apenas nada.",
       tcm:"En la MTC se asocia al descenso del Yin y la sangre. Tradicionalmente se recomienda mantener el cuerpo caliente (evitar bebidas frías), descansar más de lo habitual y tomar caldos, jengibre o remolacha.",
       icon: null
     },
     folicular: {
       name:"Fase Renacer", short:"Folicular", colorVar:"--phase-folicular",
       desc:"El estrógeno empieza a subir. La energía y el ánimo suelen ir en aumento.",
+      edu:"El cuerpo empieza a preparar un nuevo óvulo mientras el estrógeno sube progresivamente. Suele notarse un aumento gradual de energía, mejor ánimo y más claridad mental a medida que avanza la fase.",
       tcm:"El Yin comienza a reconstruirse. Tradicionalmente es buen momento para retomar movimiento suave y alimentos frescos y ligeros como verduras de hoja verde.",
       icon: null
     },
     ovulatoria: {
       name:"Fase Cénit", short:"Ovulatoria", colorVar:"--phase-ovulatoria",
       desc:"Pico de energía y de fertilidad. Suele ser el momento de mayor vitalidad del ciclo.",
+      edu:"Se libera un óvulo. Es el pico de estrógeno y de la hormona LH, y la ventana de mayor fertilidad del ciclo. Muchas personas notan aquí su mayor pico de energía, libido y confianza — aunque es una ventana corta, de solo un par de días.",
       tcm:"Se considera el máximo de Yang y Qi. Tradicionalmente, el momento de mayor vitalidad para socializar y para el ejercicio más intenso.",
       icon: null
     },
     lutea: {
       name:"Fase Recogimiento", short:"Lútea", colorVar:"--phase-lutea",
       desc:"La progesterona domina. Es común notar más introspección o sensibilidad antes del periodo.",
+      edu:"El cuerpo se prepara para un posible embarazo: sube la progesterona y, si no lo hay, cae de nuevo hacia el final. Es la fase más larga del ciclo. Hacia el final es habitual el síndrome premenstrual: cansancio, cambios de apetito o de humor.",
       tcm:"El Yang desciende hacia el Yin. Tradicionalmente se recomienda moderar el ritmo, cuidar el sueño y priorizar alimentos nutritivos y fáciles de digerir.",
       icon: null
     }
@@ -331,21 +335,16 @@
     var status = computeCycleStatus();
     var empty = document.getElementById("cicloEmpty");
     var content = document.getElementById("cicloContent");
-    var mtcPhaseEl = document.getElementById("mtcPhase");
 
-    var season = getSeason(new Date());
-    document.getElementById("mtcSeason").innerHTML =
-      '<div class="mtc-title">La estación: ' + season.name + '<span class="tag none">' + season.element + ' / ' + season.organ + '</span></div>' + season.mtcNote;
+    renderPhaseEducation(status.settings || getCycleSettings());
 
     if(!status.hasData){
       empty.style.display = "block";
       content.style.display = "none";
-      mtcPhaseEl.style.display = "none";
       return;
     }
     empty.style.display = "none";
     content.style.display = "block";
-    mtcPhaseEl.style.display = "block";
 
     var phase = CYCLE_PHASES[status.phaseKey];
     document.getElementById("phaseMascot").innerHTML = phase.icon;
@@ -367,7 +366,40 @@
     document.getElementById("wheelMarker").style.transform = 'rotate(' + angle.toFixed(1) + 'deg) translate(0, -78px)';
     document.getElementById("wheelCenter").innerHTML =
       '<div class="day-num num">' + status.displayDay + '</div><div class="day-label">' + phase.short + '</div>';
+  }
 
+  function renderPhaseEducation(settings){
+    var b = getPhaseBoundaries(settings.avgCycleLength, settings.avgPeriodLength);
+    var order = ["menstrual","folicular","ovulatoria","lutea"];
+    var list = document.getElementById("phaseEduList");
+    list.innerHTML = order.map(function(key){
+      var phase = CYCLE_PHASES[key];
+      var range = b[key];
+      var rangeLabel = range.start===range.end ? ("Día " + range.start) : ("Días " + range.start + "–" + range.end);
+      return '<div class="phase-edu-item">' +
+        '<div class="mascot">' + phase.icon + '</div>' +
+        '<div class="body">' +
+          '<div class="head"><h3>' + phase.name + '</h3><span class="range">' + rangeLabel + ' · ' + phase.short.toUpperCase() + '</span></div>' +
+          '<p>' + phase.edu + '</p>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+  }
+
+  function renderMTC(){
+    var status = computeCycleStatus();
+    var mtcPhaseEl = document.getElementById("mtcPhase");
+
+    var season = getSeason(new Date());
+    document.getElementById("mtcSeason").innerHTML =
+      '<div class="mtc-title">La estación: ' + season.name + '<span class="tag none">' + season.element + ' / ' + season.organ + '</span></div>' + season.mtcNote;
+
+    if(!status.hasData){
+      mtcPhaseEl.style.display = "none";
+      return;
+    }
+    mtcPhaseEl.style.display = "block";
+    var phase = CYCLE_PHASES[status.phaseKey];
     mtcPhaseEl.innerHTML =
       '<div class="mtc-title">Tu fase: ' + phase.name + '<span class="tag warn">' + phase.short + '</span></div>' + phase.tcm;
   }
@@ -921,6 +953,7 @@
     renderTips(scores);
     renderMejoras(scores);
     renderCiclo();
+    renderMTC();
     renderNotaDelDia();
     renderHistory();
     if(document.getElementById("view-stats").classList.contains("active")) renderCharts();
