@@ -331,13 +331,21 @@
     var status = computeCycleStatus();
     var empty = document.getElementById("cicloEmpty");
     var content = document.getElementById("cicloContent");
+    var mtcPhaseEl = document.getElementById("mtcPhase");
+
+    var season = getSeason(new Date());
+    document.getElementById("mtcSeason").innerHTML =
+      '<div class="mtc-title">La estación: ' + season.name + '<span class="tag none">' + season.element + ' / ' + season.organ + '</span></div>' + season.mtcNote;
+
     if(!status.hasData){
       empty.style.display = "block";
       content.style.display = "none";
+      mtcPhaseEl.style.display = "none";
       return;
     }
     empty.style.display = "none";
     content.style.display = "block";
+    mtcPhaseEl.style.display = "block";
 
     var phase = CYCLE_PHASES[status.phaseKey];
     document.getElementById("phaseMascot").innerHTML = phase.icon;
@@ -360,11 +368,8 @@
     document.getElementById("wheelCenter").innerHTML =
       '<div class="day-num num">' + status.displayDay + '</div><div class="day-label">' + phase.short + '</div>';
 
-    var season = getSeason(new Date());
-    document.getElementById("mtcPhase").innerHTML =
+    mtcPhaseEl.innerHTML =
       '<div class="mtc-title">Tu fase: ' + phase.name + '<span class="tag warn">' + phase.short + '</span></div>' + phase.tcm;
-    document.getElementById("mtcSeason").innerHTML =
-      '<div class="mtc-title">La estación: ' + season.name + '<span class="tag none">' + season.element + ' / ' + season.organ + '</span></div>' + season.mtcNote;
   }
 
   // ---------- season + moon (nota del día) ----------
