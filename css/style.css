@@ -159,8 +159,7 @@ input[type="checkbox"]{accent-color:var(--ink); width:16px; height:16px;}
 }
 .subtabs button[aria-selected="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink);}
 
-.entry-form{display:none;}
-.entry-form.active{display:block;}
+.entry-form:not(.active){display:none;}
 
 .chart-card canvas{max-width:100%;}
 .chart-title{
