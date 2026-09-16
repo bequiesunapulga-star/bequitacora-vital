@@ -148,10 +148,6 @@
     btn.addEventListener("click", function(){ switchTab(btn.dataset.view); });
   });
   document.getElementById("goMejoras").addEventListener("click", function(){ switchTab("mejoras"); });
-  document.getElementById("cicloGoRegistrar").addEventListener("click", function(){
-    switchTab("registrar");
-    document.querySelector('.subtabs button[data-form="cycle"]').click();
-  });
 
   document.querySelectorAll(".subtabs button").forEach(function(btn){
     btn.addEventListener("click", function(){
@@ -167,7 +163,7 @@
     r.addEventListener("input", function(){ out.textContent = r.value; });
   });
 
-  document.querySelectorAll('input[type="date"]').forEach(function(i){ i.value = todayISO(); });
+  document.querySelectorAll('input[type="date"]:not([name="endDate"])').forEach(function(i){ i.value = todayISO(); });
 
   // ---------- forms ----------
   document.querySelectorAll("form.entry").forEach(function(form){
@@ -179,10 +175,18 @@
       data.flag = !!form.querySelector('[name="flag"]') && form.querySelector('[name="flag"]').checked;
       if(data.quality) data.quality = Number(data.quality);
       if(data.hours) data.hours = Number(data.hours);
+      if(type==="cycles"){
+        ["symHeadache","symBloating","symFatigue","symMood","symNausea"].forEach(function(name){
+          var el = form.querySelector('[name="'+name+'"]');
+          data[name] = !!(el && el.checked);
+        });
+      }
       addEntry(type, data).then(function(){
         showToast("Guardado");
         form.reset();
         form.querySelectorAll('input[type="date"]').forEach(function(i){ i.value = todayISO(); });
+        var endDateInput = form.querySelector('[name="endDate"]');
+        if(endDateInput) endDateInput.value = "";
         form.querySelectorAll('input[type="range"]').forEach(function(r){ r.value=3; r.nextElementSibling.textContent="3"; });
       });
     });
@@ -308,6 +312,14 @@
     var clampedDay = Math.min(Math.max(cycleDay,1), settings.avgCycleLength);
     var phaseKey = phaseForDay(clampedDay, b);
 
+    var todayStr = todayISO();
+    var onPeriod = !!(last.endDate && todayStr>=last.date && todayStr<=last.endDate);
+    if(onPeriod) phaseKey = "menstrual";
+
+    var symptoms = ["symHeadache","symBloating","symFatigue","symMood","symNausea"]
+      .filter(function(k){ return last[k]; })
+      .map(function(k){ return {symHeadache:"Dolor de cabeza", symBloating:"Hinchazón", symFatigue:"Cansancio", symMood:"Cambios de humor", symNausea:"Náuseas"}[k]; });
+
     var nextPeriod = new Date(lastStart); nextPeriod.setDate(nextPeriod.getDate()+settings.avgCycleLength);
     var ovulation = new Date(lastStart); ovulation.setDate(ovulation.getDate()+b.ovulationDay-1);
     var fertileStart = new Date(ovulation); fertileStart.setDate(fertileStart.getDate()-5);
@@ -322,7 +334,8 @@
     return {
       hasData:true, settings:settings, boundaries:b, lastStart:last.date,
       cycleDay:cycleDay, displayDay:clampedDay, overdue: cycleDay>settings.avgCycleLength,
-      phaseKey:phaseKey,
+      phaseKey:phaseKey, onPeriod:onPeriod,
+      lastEndDate: last.endDate||null, lastFlow: last.flow||null, lastPain: last.pain||null, symptoms:symptoms,
       nextPeriod: toISO(nextPeriod),
       ovulation: toISO(ovulation),
       fertileStart: toISO(fertileStart),
@@ -331,12 +344,19 @@
     };
   }
 
+  var cycleDetailsTouched = false;
+  document.getElementById("cycleLogDetails").addEventListener("toggle", function(){ cycleDetailsTouched = true; });
+
   function renderCiclo(){
     var status = computeCycleStatus();
     var empty = document.getElementById("cicloEmpty");
     var content = document.getElementById("cicloContent");
 
     renderPhaseEducation(status.settings || getCycleSettings());
+
+    if(!cycleDetailsTouched){
+      document.getElementById("cycleLogDetails").open = !status.hasData;
+    }
 
     if(!status.hasData){
       empty.style.display = "block";
@@ -350,10 +370,19 @@
     document.getElementById("phaseMascot").innerHTML = phase.icon;
     document.getElementById("phaseName").textContent = phase.name;
     document.getElementById("phaseDesc").textContent = phase.desc + (status.overdue ? " Tu periodo previsto ya ha pasado — si no ha llegado, actualiza el registro cuando empiece." : "");
-    document.getElementById("cicloDates").innerHTML =
-      '<div><strong>Día ' + status.displayDay + '</strong> de ' + status.settings.avgCycleLength + ' · fase ' + phase.short + '</div>' +
-      '<div>Próximo periodo previsto: <strong>' + fmtDate(status.nextPeriod) + '</strong></div>' +
-      '<div>Ventana fértil estimada: <strong>' + fmtDate(status.fertileStart) + ' – ' + fmtDate(status.fertileEnd) + '</strong></div>';
+
+    var lines = [];
+    lines.push('<div><strong>Día ' + status.displayDay + '</strong> de ' + status.settings.avgCycleLength + ' · fase ' + phase.short + '</div>');
+    if(status.onPeriod){
+      lines.push('<div><span class="tag bad">Sangrado activo</span>' +
+        (status.lastFlow ? ' · ' + status.lastFlow : '') + (status.lastPain ? ' · dolor: ' + status.lastPain : '') + '</div>');
+    } else if(status.lastEndDate){
+      lines.push('<div>Último periodo: ' + fmtDate(status.lastStart) + ' – ' + fmtDate(status.lastEndDate) + '</div>');
+    }
+    if(status.symptoms.length) lines.push('<div>Síntomas registrados: ' + status.symptoms.join(", ") + '</div>');
+    lines.push('<div>Próximo periodo previsto: <strong>' + fmtDate(status.nextPeriod) + '</strong></div>');
+    lines.push('<div>Ventana fértil estimada: <strong>' + fmtDate(status.fertileStart) + ' – ' + fmtDate(status.fertileEnd) + '</strong></div>');
+    document.getElementById("cicloDates").innerHTML = lines.join("");
 
     var b = status.boundaries, len = status.settings.avgCycleLength;
     var mEnd = (b.menstrual.end/len*100).toFixed(2);
@@ -889,7 +918,16 @@
       case "sleep": return {badge:"SUE", title:entry.hours+"h · calidad "+entry.quality+"/5", desc:entry.notes};
       case "supplements": return {badge:"SUP", title:entry.name+(entry.dose?" · "+entry.dose:""), desc:entry.notes};
       case "medical": return {badge:"MED", title:(entry.title||entry.type)+(entry.flag?" · pendiente":""), desc:entry.notes};
-      case "cycles": return {badge:"CIC", title:"Inicio de periodo", desc:""};
+      case "cycles":
+        var symLabels = {symHeadache:"dolor de cabeza", symBloating:"hinchazón", symFatigue:"cansancio", symMood:"cambios de humor", symNausea:"náuseas"};
+        var syms = Object.keys(symLabels).filter(function(k){ return entry[k]; }).map(function(k){ return symLabels[k]; });
+        var titleParts = [entry.endDate ? ("Hasta " + fmtDate(entry.endDate)) : "En curso"];
+        if(entry.flow) titleParts.push(entry.flow);
+        if(entry.pain) titleParts.push("dolor: " + entry.pain);
+        var descParts = [];
+        if(syms.length) descParts.push("Síntomas: " + syms.join(", "));
+        if(entry.notes) descParts.push(entry.notes);
+        return {badge:"CIC", title:"Periodo · " + titleParts.join(" · "), desc: descParts.join(" — ")};
     }
   }
 

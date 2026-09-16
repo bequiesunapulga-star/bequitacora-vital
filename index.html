@@ -65,7 +65,6 @@
       <button role="tab" aria-selected="false" data-form="sleep">Sueño</button>
       <button role="tab" aria-selected="false" data-form="supplement">Suplemento</button>
       <button role="tab" aria-selected="false" data-form="medical">Informe médico</button>
-      <button role="tab" aria-selected="false" data-form="cycle">Regla</button>
     </div>
 
     <div class="card">
@@ -129,36 +128,62 @@
         </label>
         <div><button type="submit" class="btn">Guardar informe</button></div>
       </form>
-
-      <div class="entry-form" id="form-cycle">
-        <form class="entry" data-type="cycles">
-          <div class="field-row">
-            <label>Fecha de inicio del periodo <input type="date" name="date" required></label>
-          </div>
-          <div><button type="submit" class="btn">Registrar inicio</button></div>
-        </form>
-
-        <hr class="divider">
-
-        <form id="form-cycle-settings">
-          <div class="field-row">
-            <label>Duración media del ciclo (días) <input type="number" id="settingCycleLength" min="15" max="60" step="1"></label>
-            <label>Duración media del periodo (días) <input type="number" id="settingPeriodLength" min="1" max="15" step="1"></label>
-          </div>
-          <div><button type="submit" class="btn ghost small">Guardar ajustes del ciclo</button></div>
-        </form>
-      </div>
     </div>
   </section>
 
   <!-- CICLO -->
   <section class="view" id="view-ciclo">
-    <div class="card" id="cicloEmpty" style="display:none;">
-      <p style="color:var(--ink-soft); margin:0 0 12px;">Aún no has registrado ningún periodo.</p>
-      <button class="btn ghost small" id="cicloGoRegistrar">Registrar mi primer periodo →</button>
+    <details class="card" id="cycleLogDetails">
+      <summary>Registrar periodo</summary>
+      <form class="entry" data-type="cycles">
+        <div class="field-row">
+          <label>Fecha de inicio <input type="date" name="date" required></label>
+          <label>Fecha de fin (si ya terminó) <input type="date" name="endDate"></label>
+        </div>
+        <div class="field-row">
+          <label>Tipo de sangrado
+            <select name="flow">
+              <option value="">Sin especificar</option>
+              <option>Manchado</option><option>Ligero</option><option>Medio</option><option>Abundante</option>
+            </select>
+          </label>
+          <label>Dolor / cólicos
+            <select name="pain">
+              <option value="">Sin especificar</option>
+              <option>Sin dolor</option><option>Leve</option><option>Moderado</option><option>Intenso</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label style="margin-bottom:8px;">Otros síntomas</label>
+          <div class="check-grid">
+            <label class="check-label"><input type="checkbox" name="symHeadache"> Dolor de cabeza</label>
+            <label class="check-label"><input type="checkbox" name="symBloating"> Hinchazón</label>
+            <label class="check-label"><input type="checkbox" name="symFatigue"> Cansancio</label>
+            <label class="check-label"><input type="checkbox" name="symMood"> Cambios de humor</label>
+            <label class="check-label"><input type="checkbox" name="symNausea"> Náuseas</label>
+          </div>
+        </div>
+        <label>Notas <textarea name="notes" placeholder="Opcional"></textarea></label>
+        <div><button type="submit" class="btn">Guardar registro</button></div>
+      </form>
+
+      <hr class="divider">
+
+      <form id="form-cycle-settings">
+        <div class="field-row">
+          <label>Duración media del ciclo (días) <input type="number" id="settingCycleLength" min="15" max="60" step="1"></label>
+          <label>Duración media del periodo (días) <input type="number" id="settingPeriodLength" min="1" max="15" step="1"></label>
+        </div>
+        <div><button type="submit" class="btn ghost small">Guardar ajustes del ciclo</button></div>
+      </form>
+    </details>
+
+    <div class="card" id="cicloEmpty" style="display:none; margin-top:14px;">
+      <p style="color:var(--ink-soft); margin:0;">Aún no has registrado ningún periodo. Usa el formulario de arriba para añadir el primero.</p>
     </div>
 
-    <div id="cicloContent">
+    <div id="cicloContent" style="margin-top:14px;">
       <div class="card ciclo-hero">
         <div class="cycle-wheel" id="cycleWheel">
           <div class="wheel-ring" id="wheelRing"></div>

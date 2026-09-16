@@ -162,6 +162,27 @@ input[type="checkbox"]{accent-color:var(--ink); width:16px; height:16px;}
 
 .entry-form:not(.active){display:none;}
 
+details.card{padding:0;}
+details.card summary{
+  padding:20px; cursor:pointer; list-style:none; font-family:'IBM Plex Mono',monospace;
+  font-weight:600; font-size:.78rem; letter-spacing:.06em; text-transform:uppercase; color:var(--ink);
+  display:flex; align-items:center; justify-content:space-between;
+}
+details.card summary::-webkit-details-marker{display:none;}
+details.card summary::after{content:"+"; font-size:1.1rem; font-weight:400; color:var(--ink-faint);}
+details.card[open] summary::after{content:"–";}
+details.card summary:focus-visible{outline:1.5px solid var(--ink); outline-offset:-2px;}
+details.card form, details.card hr.divider{margin-left:20px; margin-right:20px;}
+details.card form:first-of-type{margin-top:4px;}
+details.card form:last-of-type{margin-bottom:20px;}
+
+.check-grid{display:flex; flex-wrap:wrap; gap:10px 16px;}
+.check-label{
+  flex-direction:row; align-items:center; gap:7px; text-transform:none; letter-spacing:0;
+  font-family:'IBM Plex Sans',sans-serif; font-weight:400; font-size:.87rem; color:var(--ink);
+}
+.check-label input{width:auto;}
+
 .chart-card canvas{max-width:100%;}
 .chart-title{
   font-size:.7rem; font-weight:600; margin-bottom:14px; text-transform:uppercase;
