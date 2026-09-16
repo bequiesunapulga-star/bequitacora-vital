@@ -20,6 +20,7 @@
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-view="hoy">Hoy</button>
     <button role="tab" aria-selected="false" data-view="registrar">Registrar</button>
+    <button role="tab" aria-selected="false" data-view="ciclo">Ciclo</button>
     <button role="tab" aria-selected="false" data-view="stats">Estadísticas</button>
     <button role="tab" aria-selected="false" data-view="mejoras">Mejoras</button>
     <button role="tab" aria-selected="false" data-view="historial">Historial</button>
@@ -27,6 +28,8 @@
 
   <!-- HOY -->
   <section class="view active" id="view-hoy">
+    <div class="card nota-dia" id="notaDelDia"></div>
+
     <div class="grid dash">
       <div class="card gauge-card">
         <div class="label">Score general · 7 días</div>
@@ -61,6 +64,7 @@
       <button role="tab" aria-selected="false" data-form="sleep">Sueño</button>
       <button role="tab" aria-selected="false" data-form="supplement">Suplemento</button>
       <button role="tab" aria-selected="false" data-form="medical">Informe médico</button>
+      <button role="tab" aria-selected="false" data-form="cycle">Regla</button>
     </div>
 
     <div class="card">
@@ -124,6 +128,56 @@
         </label>
         <div><button type="submit" class="btn">Guardar informe</button></div>
       </form>
+
+      <div class="entry-form" id="form-cycle">
+        <form class="entry" data-type="cycles">
+          <div class="field-row">
+            <label>Fecha de inicio del periodo <input type="date" name="date" required></label>
+          </div>
+          <div><button type="submit" class="btn">Registrar inicio</button></div>
+        </form>
+
+        <hr class="divider">
+
+        <form id="form-cycle-settings">
+          <div class="field-row">
+            <label>Duración media del ciclo (días) <input type="number" id="settingCycleLength" min="15" max="60" step="1"></label>
+            <label>Duración media del periodo (días) <input type="number" id="settingPeriodLength" min="1" max="15" step="1"></label>
+          </div>
+          <div><button type="submit" class="btn ghost small">Guardar ajustes del ciclo</button></div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- CICLO -->
+  <section class="view" id="view-ciclo">
+    <div class="card" id="cicloEmpty" style="display:none;">
+      <p style="color:var(--ink-soft); margin:0 0 12px;">Aún no has registrado ningún periodo.</p>
+      <button class="btn ghost small" id="cicloGoRegistrar">Registrar mi primer periodo →</button>
+    </div>
+
+    <div id="cicloContent">
+      <div class="card ciclo-hero">
+        <div class="cycle-wheel" id="cycleWheel">
+          <div class="wheel-ring" id="wheelRing"></div>
+          <div class="wheel-marker" id="wheelMarker"></div>
+          <div class="wheel-center" id="wheelCenter"></div>
+        </div>
+        <div class="ciclo-hero-info">
+          <div class="phase-mascot" id="phaseMascot"></div>
+          <h2 id="phaseName">—</h2>
+          <div class="sub" id="phaseDesc"></div>
+          <div class="ciclo-dates" id="cicloDates"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="section-title"><h2 style="font-size:1.15rem;">Medicina Tradicional China</h2></div>
+        <div class="mtc-disclaimer">Contenido cultural de bienestar basado en la tradición, no un tratamiento médico. Ante cualquier duda de salud, consulta a un profesional.</div>
+        <div class="mtc-block" id="mtcPhase"></div>
+        <div class="mtc-block" id="mtcSeason"></div>
+      </div>
     </div>
   </section>
 
@@ -137,6 +191,10 @@
       <div class="card chart-card">
         <div class="chart-title">Calidad media de comidas por día · 14 días</div>
         <canvas id="chartMeals" height="220"></canvas>
+      </div>
+      <div class="card chart-card" id="cycleChartCard" style="display:none;">
+        <div class="chart-title">Duración de los últimos ciclos</div>
+        <canvas id="chartCycle" height="180"></canvas>
       </div>
       <div class="grid" style="grid-template-columns:1fr 1fr;">
         <div class="card chart-card">
@@ -192,6 +250,7 @@
       <button aria-pressed="false" data-filter="sleep">Sueño</button>
       <button aria-pressed="false" data-filter="supplements">Suplementos</button>
       <button aria-pressed="false" data-filter="medical">Médico</button>
+      <button aria-pressed="false" data-filter="cycles">Ciclo</button>
     </div>
     <div class="history-list" id="historyList"></div>
   </section>

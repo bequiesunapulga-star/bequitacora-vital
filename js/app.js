@@ -1,14 +1,21 @@
 (function(){
   "use strict";
 
-  var TYPES = ["meals","sleep","supplements","medical"];
+  var TYPES = ["meals","sleep","supplements","medical","cycles"];
   var CAT_NAME = {sleep:"Sueño", nutrition:"Nutrición", supplements:"Suplementos", medical:"Médico"};
 
-  var state = {meals:[], sleep:[], supplements:[], medical:[]};
+  var state = {meals:[], sleep:[], supplements:[], medical:[], cycles:[]};
   var db = null;
   var charts = {};
 
-  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  // Local-calendar-date helper. Deliberately avoids toISOString() (UTC) so
+  // date math stays consistent with local Date parsing/arithmetic elsewhere —
+  // mixing the two silently shifts dates by a day in positive-UTC-offset zones.
+  function toISO(d){
+    var y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate();
+    return y + "-" + (m<10?"0":"")+m + "-" + (day<10?"0":"")+day;
+  }
+  function todayISO(){ return toISO(new Date()); }
   function fmtDate(iso){
     if(!iso) return "";
     var d = new Date(iso + "T00:00:00");
@@ -18,7 +25,7 @@
   function daysAgo(n){
     var d = new Date();
     d.setDate(d.getDate()-n);
-    return d.toISOString().slice(0,10);
+    return toISO(d);
   }
   function css(varName){
     return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
@@ -141,6 +148,10 @@
     btn.addEventListener("click", function(){ switchTab(btn.dataset.view); });
   });
   document.getElementById("goMejoras").addEventListener("click", function(){ switchTab("mejoras"); });
+  document.getElementById("cicloGoRegistrar").addEventListener("click", function(){
+    switchTab("registrar");
+    document.querySelector('.subtabs button[data-form="cycle"]').click();
+  });
 
   document.querySelectorAll(".subtabs button").forEach(function(btn){
     btn.addEventListener("click", function(){
@@ -176,6 +187,253 @@
       });
     });
   });
+
+  // ---------- cycle settings (localStorage-only, not per-entry) ----------
+  var CYCLE_SETTINGS_KEY = "bequitacora_vital_cycle_settings";
+  function getCycleSettings(){
+    try{
+      var raw = localStorage.getItem(CYCLE_SETTINGS_KEY);
+      if(raw) return Object.assign({avgCycleLength:28, avgPeriodLength:5}, JSON.parse(raw));
+    }catch(e){}
+    return {avgCycleLength:28, avgPeriodLength:5};
+  }
+  function saveCycleSettings(s){
+    try{ localStorage.setItem(CYCLE_SETTINGS_KEY, JSON.stringify(s)); }catch(e){}
+  }
+  (function initCycleSettingsForm(){
+    var s = getCycleSettings();
+    document.getElementById("settingCycleLength").value = s.avgCycleLength;
+    document.getElementById("settingPeriodLength").value = s.avgPeriodLength;
+  })();
+  document.getElementById("form-cycle-settings").addEventListener("submit", function(e){
+    e.preventDefault();
+    var cycleLength = Number(document.getElementById("settingCycleLength").value) || 28;
+    var periodLength = Number(document.getElementById("settingPeriodLength").value) || 5;
+    saveCycleSettings({avgCycleLength:cycleLength, avgPeriodLength:periodLength});
+    showToast("Ajustes guardados");
+    renderAll();
+  });
+
+  // ---------- cycle phase model ----------
+  function iconBlob(colorVar, o){
+    var eyes = o.eyes==="closed"
+      ? '<path d="M22,29 q3,-4 6,0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M36,29 q3,-4 6,0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
+      : '<circle cx="25" cy="29" r="2.1" fill="currentColor"/><circle cx="39" cy="29" r="2.1" fill="currentColor"/>';
+    var mouth;
+    if(o.mouth==="sleepy") mouth = '<path d="M27,40 q5,2 10,0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+    else if(o.mouth==="smile") mouth = '<path d="M25,39 q7,7 14,0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+    else if(o.mouth==="bigsmile") mouth = '<path d="M23,38 q9,10 18,0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>';
+    else mouth = '<path d="M26,40 q6,3 12,0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+
+    var motif = "";
+    if(o.motif==="drop") motif = '<path d="M32,2 C34,7 37,10 37,13 C37,16.3 34.8,18 32,18 C29.2,18 27,16.3 27,13 C27,10 30,7 32,2 Z" fill="currentColor"/>';
+    else if(o.motif==="sprout") motif = '<path d="M32,14 C32,8 28,6 24,6 C24,11 27,14 32,14 Z" fill="currentColor"/><path d="M32,14 C32,7 37,4 42,5 C41,10 37,14 32,14 Z" fill="currentColor"/><line x1="32" y1="14" x2="32" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+    else if(o.motif==="star") motif = '<path d="M33,1 L34.4,6.2 L39,6.6 L35.3,9.8 L36.4,15 L33,11.9 L29.6,15 L30.7,9.8 L27,6.6 L31.6,6.2 Z" fill="currentColor"/>';
+    else if(o.motif==="moon") motif = '<path d="M38,3 C31,4 27,10 27,15 C27,21 32,26 38,26 C33.5,23.5 31,19.3 31,15 C31,10.7 33.5,6.5 38,3 Z" fill="currentColor"/>';
+
+    return '<svg viewBox="0 0 64 46" width="56" height="42" aria-hidden="true">' +
+      '<g style="color:var(--ink)">' + motif + '</g>' +
+      '<path d="M32,14 C46,12 58,22 58,32 C58,42 46,44 32,44 C18,44 6,42 6,32 C6,21 18,16 32,14 Z" fill="var(' + colorVar + ')" stroke="var(--ink)" stroke-width="1.6"/>' +
+      '<g style="color:var(--ink)">' + eyes + mouth + '</g>' +
+    '</svg>';
+  }
+
+  var CYCLE_PHASES = {
+    menstrual: {
+      name:"Fase Sangre", short:"Menstrual", colorVar:"--phase-menstrual",
+      desc:"Los niveles hormonales están en su punto más bajo. El cuerpo suele pedir descanso, calor y calma.",
+      tcm:"En la MTC se asocia al descenso del Yin y la sangre. Tradicionalmente se recomienda mantener el cuerpo caliente (evitar bebidas frías), descansar más de lo habitual y tomar caldos, jengibre o remolacha.",
+      icon: null
+    },
+    folicular: {
+      name:"Fase Renacer", short:"Folicular", colorVar:"--phase-folicular",
+      desc:"El estrógeno empieza a subir. La energía y el ánimo suelen ir en aumento.",
+      tcm:"El Yin comienza a reconstruirse. Tradicionalmente es buen momento para retomar movimiento suave y alimentos frescos y ligeros como verduras de hoja verde.",
+      icon: null
+    },
+    ovulatoria: {
+      name:"Fase Cénit", short:"Ovulatoria", colorVar:"--phase-ovulatoria",
+      desc:"Pico de energía y de fertilidad. Suele ser el momento de mayor vitalidad del ciclo.",
+      tcm:"Se considera el máximo de Yang y Qi. Tradicionalmente, el momento de mayor vitalidad para socializar y para el ejercicio más intenso.",
+      icon: null
+    },
+    lutea: {
+      name:"Fase Recogimiento", short:"Lútea", colorVar:"--phase-lutea",
+      desc:"La progesterona domina. Es común notar más introspección o sensibilidad antes del periodo.",
+      tcm:"El Yang desciende hacia el Yin. Tradicionalmente se recomienda moderar el ritmo, cuidar el sueño y priorizar alimentos nutritivos y fáciles de digerir.",
+      icon: null
+    }
+  };
+  CYCLE_PHASES.menstrual.icon = iconBlob("--phase-menstrual", {eyes:"closed", mouth:"sleepy", motif:"drop"});
+  CYCLE_PHASES.folicular.icon = iconBlob("--phase-folicular", {eyes:"open", mouth:"smile", motif:"sprout"});
+  CYCLE_PHASES.ovulatoria.icon = iconBlob("--phase-ovulatoria", {eyes:"open", mouth:"bigsmile", motif:"star"});
+  CYCLE_PHASES.lutea.icon = iconBlob("--phase-lutea", {eyes:"open", mouth:"soft", motif:"moon"});
+
+  function getPhaseBoundaries(avgCycleLength, avgPeriodLength){
+    var periodLength = avgPeriodLength;
+    var ovulationDay = Math.max(periodLength+2, avgCycleLength-14);
+    var ovStart = Math.max(periodLength+1, ovulationDay-1);
+    var ovEnd = Math.min(avgCycleLength, ovulationDay+1);
+    var folStart = periodLength+1;
+    var folEnd = Math.max(folStart, ovStart-1);
+    var lutStart = Math.min(ovEnd+1, avgCycleLength);
+    return {
+      menstrual:{start:1, end:periodLength},
+      folicular:{start:folStart, end:folEnd},
+      ovulatoria:{start:ovStart, end:ovEnd},
+      lutea:{start:lutStart, end:avgCycleLength},
+      ovulationDay: ovulationDay
+    };
+  }
+  function phaseForDay(day, b){
+    if(day<=b.menstrual.end) return "menstrual";
+    if(day<=b.folicular.end) return "folicular";
+    if(day<=b.ovulatoria.end) return "ovulatoria";
+    return "lutea";
+  }
+
+  function computeCycleStatus(){
+    var settings = getCycleSettings();
+    if(!state.cycles.length) return {hasData:false, settings:settings};
+    var entries = state.cycles.slice().sort(function(a,b){ return (a.date||"").localeCompare(b.date||""); });
+    var last = entries[entries.length-1];
+    var lastStart = new Date(last.date+"T00:00:00");
+    var today = new Date(todayISO()+"T00:00:00");
+    var cycleDay = Math.round((today-lastStart)/86400000)+1;
+    var b = getPhaseBoundaries(settings.avgCycleLength, settings.avgPeriodLength);
+    var clampedDay = Math.min(Math.max(cycleDay,1), settings.avgCycleLength);
+    var phaseKey = phaseForDay(clampedDay, b);
+
+    var nextPeriod = new Date(lastStart); nextPeriod.setDate(nextPeriod.getDate()+settings.avgCycleLength);
+    var ovulation = new Date(lastStart); ovulation.setDate(ovulation.getDate()+b.ovulationDay-1);
+    var fertileStart = new Date(ovulation); fertileStart.setDate(fertileStart.getDate()-5);
+    var fertileEnd = new Date(ovulation); fertileEnd.setDate(fertileEnd.getDate()+1);
+
+    var lengths = [];
+    for(var i=1;i<entries.length;i++){
+      var d0 = new Date(entries[i-1].date+"T00:00:00"), d1 = new Date(entries[i].date+"T00:00:00");
+      lengths.push({date:entries[i].date, length:Math.round((d1-d0)/86400000)});
+    }
+
+    return {
+      hasData:true, settings:settings, boundaries:b, lastStart:last.date,
+      cycleDay:cycleDay, displayDay:clampedDay, overdue: cycleDay>settings.avgCycleLength,
+      phaseKey:phaseKey,
+      nextPeriod: toISO(nextPeriod),
+      ovulation: toISO(ovulation),
+      fertileStart: toISO(fertileStart),
+      fertileEnd: toISO(fertileEnd),
+      lengths: lengths
+    };
+  }
+
+  function renderCiclo(){
+    var status = computeCycleStatus();
+    var empty = document.getElementById("cicloEmpty");
+    var content = document.getElementById("cicloContent");
+    if(!status.hasData){
+      empty.style.display = "block";
+      content.style.display = "none";
+      return;
+    }
+    empty.style.display = "none";
+    content.style.display = "block";
+
+    var phase = CYCLE_PHASES[status.phaseKey];
+    document.getElementById("phaseMascot").innerHTML = phase.icon;
+    document.getElementById("phaseName").textContent = phase.name;
+    document.getElementById("phaseDesc").textContent = phase.desc + (status.overdue ? " Tu periodo previsto ya ha pasado — si no ha llegado, actualiza el registro cuando empiece." : "");
+    document.getElementById("cicloDates").innerHTML =
+      '<div><strong>Día ' + status.displayDay + '</strong> de ' + status.settings.avgCycleLength + ' · fase ' + phase.short + '</div>' +
+      '<div>Próximo periodo previsto: <strong>' + fmtDate(status.nextPeriod) + '</strong></div>' +
+      '<div>Ventana fértil estimada: <strong>' + fmtDate(status.fertileStart) + ' – ' + fmtDate(status.fertileEnd) + '</strong></div>';
+
+    var b = status.boundaries, len = status.settings.avgCycleLength;
+    var mEnd = (b.menstrual.end/len*100).toFixed(2);
+    var fEnd = (b.folicular.end/len*100).toFixed(2);
+    var oEnd = (b.ovulatoria.end/len*100).toFixed(2);
+    document.getElementById("wheelRing").style.background =
+      'conic-gradient(from -90deg, var(--phase-menstrual) 0% ' + mEnd + '%, var(--phase-folicular) ' + mEnd + '% ' + fEnd + '%, ' +
+      'var(--phase-ovulatoria) ' + fEnd + '% ' + oEnd + '%, var(--phase-lutea) ' + oEnd + '% 100%)';
+    var angle = (status.displayDay-1)/len*360 - 90;
+    document.getElementById("wheelMarker").style.transform = 'rotate(' + angle.toFixed(1) + 'deg) translate(0, -78px)';
+    document.getElementById("wheelCenter").innerHTML =
+      '<div class="day-num num">' + status.displayDay + '</div><div class="day-label">' + phase.short + '</div>';
+
+    var season = getSeason(new Date());
+    document.getElementById("mtcPhase").innerHTML =
+      '<div class="mtc-title">Tu fase: ' + phase.name + '<span class="tag warn">' + phase.short + '</span></div>' + phase.tcm;
+    document.getElementById("mtcSeason").innerHTML =
+      '<div class="mtc-title">La estación: ' + season.name + '<span class="tag none">' + season.element + ' / ' + season.organ + '</span></div>' + season.mtcNote;
+  }
+
+  // ---------- season + moon (nota del día) ----------
+  function getSeason(date){
+    var m = date.getMonth();
+    if(m===11||m===0||m===1) return {name:"Invierno", element:"Agua", organ:"Riñones",
+      note:"Tiempo de recogimiento. Muchas tradiciones invitan a conservar energía, dormir más y cuidar el calor del cuerpo.",
+      mtcNote:"La MTC asocia el invierno con el elemento Agua y los riñones. Tradicionalmente se recomienda descansar más, abrigar la zona lumbar y priorizar alimentos calientes y nutritivos."};
+    if(m>=2&&m<=4) return {name:"Primavera", element:"Madera", organ:"Hígado",
+      note:"Tiempo de expansión. Se suele asociar esta estación con nuevos comienzos y con soltar la rigidez del invierno.",
+      mtcNote:"La MTC asocia la primavera con el elemento Madera y el hígado. Tradicionalmente es buen momento para moverse más, comer ligero y dejar espacio a proyectos nuevos."};
+    if(m>=5&&m<=7) return {name:"Verano", element:"Fuego", organ:"Corazón",
+      note:"Tiempo de máxima actividad. La tradición invita a socializar y disfrutar, sin descuidar la hidratación y el descanso.",
+      mtcNote:"La MTC asocia el verano con el elemento Fuego y el corazón. Tradicionalmente se recomienda mantenerse fresco, hidratado y cuidar el descanso nocturno pese a los días largos."};
+    return {name:"Otoño", element:"Metal", organ:"Pulmón",
+      note:"Tiempo de soltar y ordenar. Se suele asociar esta estación con la respiración consciente y con cerrar ciclos antes del invierno.",
+      mtcNote:"La MTC asocia el otoño con el elemento Metal y el pulmón. Tradicionalmente es buen momento para la respiración consciente, ordenar espacios y soltar lo que ya no aporta."};
+  }
+
+  function getMoonPhase(date){
+    var synodic = 29.530588853;
+    var known = Date.UTC(2000,0,6,18,14,0);
+    var days = (date.getTime()-known)/86400000;
+    var phase = ((days % synodic)+synodic)%synodic / synodic;
+    var table = [
+      {max:0.03, name:"Luna nueva", note:"Tradicionalmente, un buen momento simbólico para sembrar intenciones nuevas."},
+      {max:0.22, name:"Luna creciente", note:"Se suele asociar con dar los primeros pasos hacia lo que te propones."},
+      {max:0.28, name:"Cuarto creciente", note:"Momento simbólico de ajuste según avanza lo iniciado."},
+      {max:0.47, name:"Gibosa creciente", note:"Fase de refinar detalles antes de que algo llegue a su punto máximo."},
+      {max:0.53, name:"Luna llena", note:"Tradicionalmente el punto de mayor intensidad emocional y de resultados visibles."},
+      {max:0.72, name:"Gibosa menguante", note:"Buen momento simbólico para agradecer y compartir lo aprendido."},
+      {max:0.78, name:"Cuarto menguante", note:"Fase de soltar lo que ya no aporta y hacer limpieza."},
+      {max:0.97, name:"Luna menguante", note:"Momento de descanso y cierre antes de que el ciclo vuelva a empezar."},
+      {max:1.01, name:"Luna nueva", note:"Tradicionalmente, un buen momento simbólico para sembrar intenciones nuevas."}
+    ];
+    var entry = table[0];
+    for(var i=0;i<table.length;i++){ if(phase<=table[i].max){ entry = table[i]; break; } }
+    return Object.assign({fraction:phase}, entry);
+  }
+
+  function moonIcon(phase){
+    if(phase<0.03||phase>0.97){
+      return '<svg viewBox="0 0 22 22" width="22" height="22"><circle cx="11" cy="11" r="8" fill="none" stroke="var(--ink)" stroke-width="1.6"/></svg>';
+    }
+    if(phase>=0.47&&phase<=0.53){
+      return '<svg viewBox="0 0 22 22" width="22" height="22"><circle cx="11" cy="11" r="9" fill="var(--ink)"/></svg>';
+    }
+    var waxing = phase<0.5;
+    var illum = waxing ? Math.min(phase/0.5,1) : Math.min((1-phase)/0.5,1);
+    var offset = illum*18;
+    var dir = waxing ? -1 : 1;
+    var cx = 11 + dir*offset;
+    return '<svg viewBox="0 0 22 22" width="22" height="22">' +
+      '<circle cx="11" cy="11" r="9" fill="var(--ink)"/>' +
+      '<circle cx="' + cx.toFixed(1) + '" cy="11" r="9" fill="var(--surface)"/>' +
+    '</svg>';
+  }
+
+  function renderNotaDelDia(){
+    var today = new Date();
+    var season = getSeason(today);
+    var moon = getMoonPhase(today);
+    document.getElementById("notaDelDia").innerHTML =
+      '<div class="nota-head">Nota del día</div>' +
+      '<div class="nota-body">' +
+        '<div class="nota-item"><span class="nota-icon">' + moonIcon(moon.fraction) + '</span><div><strong>' + moon.name + '</strong><br>' + moon.note + '</div></div>' +
+        '<div class="nota-item"><span class="nota-icon serif" style="font-style:normal; font-size:1.1rem;">'+ season.element[0] +'</span><div><strong>' + season.name + '</strong> · ' + season.element + ' / ' + season.organ + '<br>' + season.note + '</div></div>' +
+      '</div>';
+  }
 
   // ---------- scoring ----------
   function inWindow(dateStr, fromISO){
@@ -558,6 +816,24 @@
       cell.style.background = c===0 ? css("--fill-weak") : c===1 ? css("--fill-mid") : css("--fill-strong");
       heat.appendChild(cell);
     });
+
+    var cycleCard = document.getElementById("cycleChartCard");
+    var cycleStatus = computeCycleStatus();
+    if(cycleStatus.hasData && cycleStatus.lengths.length){
+      cycleCard.style.display = "block";
+      var lastLengths = cycleStatus.lengths.slice(-8);
+      if(charts.cycle) charts.cycle.destroy();
+      charts.cycle = new Chart(document.getElementById("chartCycle"), {
+        type:"bar",
+        data:{
+          labels: lastLengths.map(function(l){ return fmtDate(l.date); }),
+          datasets:[{label:"Días", data: lastLengths.map(function(l){ return l.length; }), backgroundColor:ink, borderRadius:2}]
+        },
+        options:{ responsive:true, scales:{ y:{beginAtZero:true, suggestedMax:35} } }
+      });
+    } else {
+      cycleCard.style.display = "none";
+    }
   }
 
   // ---------- history ----------
@@ -576,6 +852,7 @@
       case "sleep": return {badge:"SUE", title:entry.hours+"h · calidad "+entry.quality+"/5", desc:entry.notes};
       case "supplements": return {badge:"SUP", title:entry.name+(entry.dose?" · "+entry.dose:""), desc:entry.notes};
       case "medical": return {badge:"MED", title:(entry.title||entry.type)+(entry.flag?" · pendiente":""), desc:entry.notes};
+      case "cycles": return {badge:"CIC", title:"Inicio de periodo", desc:""};
     }
   }
 
@@ -638,6 +915,8 @@
     renderBanner(scores);
     renderTips(scores);
     renderMejoras(scores);
+    renderCiclo();
+    renderNotaDelDia();
     renderHistory();
     if(document.getElementById("view-stats").classList.contains("active")) renderCharts();
   }
