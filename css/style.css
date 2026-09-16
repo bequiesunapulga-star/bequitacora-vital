@@ -293,6 +293,37 @@ details.card form:last-of-type{margin-bottom:20px;}
 .mtc-block .mtc-title .tag{margin-left:auto;}
 .mtc-disclaimer{font-size:.74rem; color:var(--ink-faint); font-style:italic; font-family:'Instrument Serif',serif; margin-bottom:6px;}
 
+.tea-card{display:flex; gap:12px; padding:14px 0; border-top:1px solid var(--line); align-items:flex-start;}
+.tea-card:first-child{border-top:none; padding-top:2px;}
+.tea-card .cup{flex:0 0 auto; font-family:'Instrument Serif',serif; font-style:italic; font-size:1.6rem; color:var(--ink-faint); line-height:1;}
+.tea-card .body{flex:1;}
+.tea-card .head{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:3px;}
+.tea-card .head strong{font-size:.95rem;}
+.tea-card p{margin:0; font-size:.86rem; line-height:1.5; color:var(--ink-soft);}
+
+.guasha-steps{list-style:none; margin:0; padding:0; counter-reset:step; display:flex; flex-direction:column; gap:10px;}
+.guasha-steps li{
+  display:flex; gap:12px; font-size:.87rem; line-height:1.5; color:var(--ink-soft);
+  counter-increment:step;
+}
+.guasha-steps li::before{
+  content:counter(step); flex:0 0 auto; width:22px; height:22px; border:1px solid var(--ink);
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-family:'IBM Plex Mono',monospace; font-size:.7rem; font-weight:600; color:var(--ink);
+}
+.guasha-note{margin-top:14px; padding-top:14px; border-top:1px solid var(--line); font-size:.85rem; color:var(--ink-soft); line-height:1.5;}
+.guasha-warn{font-size:.78rem; color:var(--ink-faint); margin-top:10px; font-style:italic; font-family:'Instrument Serif',serif;}
+
+.elements-table-wrap{overflow-x:auto;}
+.elements-table{width:100%; border-collapse:collapse; font-size:.85rem;}
+.elements-table th, .elements-table td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); white-space:nowrap;}
+.elements-table th{
+  font-family:'IBM Plex Mono',monospace; font-size:.65rem; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--ink-faint); font-weight:600;
+}
+.elements-table tbody tr:last-child td{border-bottom:none;}
+.elements-table td:first-child{font-family:'Instrument Serif',serif; font-style:italic; font-size:1rem;}
+
 .phase-edu-list{display:flex; flex-direction:column;}
 .phase-edu-item{display:flex; gap:14px; padding:16px 2px; border-top:1px solid var(--line); align-items:flex-start;}
 .phase-edu-item:first-child{border-top:none;}

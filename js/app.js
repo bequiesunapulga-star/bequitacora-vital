@@ -505,22 +505,79 @@
     }).join("");
   }
 
+  var TEA_BY_PHASE = {
+    menstrual: {name:"Jengibre y canela", why:"Calienta el cuerpo. Tradicionalmente se usa para acompañar cólicos y favorecer que la sangre \"no se estanque\"."},
+    folicular: {name:"Menta y limón", why:"Ligera y refrescante, tradicionalmente asociada a acompañar el aumento de energía de esta fase."},
+    ovulatoria: {name:"Hibisco o rosa mosqueta", why:"Tradicionalmente asociada a nutrir la sangre y sostener el pico de vitalidad de esta fase."},
+    lutea: {name:"Manzanilla y regaliz", why:"Calmante. Tradicionalmente se usa para suavizar el ánimo y la tensión antes del periodo."}
+  };
+  var TEA_BY_SEASON = {
+    Invierno: {name:"Jengibre y clavo", why:"Calienta el cuerpo y tradicionalmente se asocia a apoyar la energía del riñón en la estación más fría."},
+    Primavera: {name:"Menta y flor de manzanilla", why:"Ligera y aromática, tradicionalmente asociada a acompañar al hígado en la estación de renovación."},
+    Verano: {name:"Hibisco frío o té verde", why:"Refrescante, tradicionalmente asociado a acompañar al corazón durante el calor."},
+    Otoño: {name:"Pera y jengibre", why:"La pera cocida es un remedio tradicional para la sequedad de otoño; el jengibre aporta calor suave."}
+  };
+
   function renderMTC(){
     var status = computeCycleStatus();
     var mtcPhaseEl = document.getElementById("mtcPhase");
+    var teaPhaseEl = document.getElementById("teaPhase");
 
     var season = getSeason(new Date());
     document.getElementById("mtcSeason").innerHTML =
       '<div class="mtc-title">La estación: ' + season.name + '<span class="tag none">' + season.element + ' / ' + season.organ + '</span></div>' + season.mtcNote;
 
+    var seasonTea = TEA_BY_SEASON[season.name];
+    document.getElementById("teaSeason").innerHTML = teaCard(seasonTea, "Según la estación (" + season.name + ")");
+
     if(!status.hasData){
       mtcPhaseEl.style.display = "none";
-      return;
+      teaPhaseEl.style.display = "none";
+    } else {
+      mtcPhaseEl.style.display = "block";
+      teaPhaseEl.style.display = "block";
+      var phase = CYCLE_PHASES[status.phaseKey];
+      mtcPhaseEl.innerHTML =
+        '<div class="mtc-title">Tu fase: ' + phase.name + '<span class="tag warn">' + phase.short + '</span></div>' + phase.tcm;
+      var phaseTea = TEA_BY_PHASE[status.phaseKey];
+      teaPhaseEl.innerHTML = teaCard(phaseTea, "Según tu fase (" + phase.short + ")");
     }
-    mtcPhaseEl.style.display = "block";
-    var phase = CYCLE_PHASES[status.phaseKey];
-    mtcPhaseEl.innerHTML =
-      '<div class="mtc-title">Tu fase: ' + phase.name + '<span class="tag warn">' + phase.short + '</span></div>' + phase.tcm;
+
+    renderGuaSha(status);
+  }
+
+  function teaCard(tea, label){
+    return '<div class="tea-card"><div class="cup">☕</div><div class="body">' +
+      '<div class="head"><strong>' + tea.name + '</strong><span class="tag none">' + label + '</span></div>' +
+      '<p>' + tea.why + '</p></div></div>';
+  }
+
+  function renderGuaSha(status){
+    var el = document.getElementById("guaShaBlock");
+    var phaseNote = "";
+    if(status.hasData){
+      var phase = CYCLE_PHASES[status.phaseKey];
+      if(status.phaseKey==="lutea"){
+        phaseNote = "En tu fase actual (" + phase.short + "), cuando es más común la retención de líquidos, un gua sha suave en rostro o piernas se usa tradicionalmente para estimular el drenaje.";
+      } else if(status.phaseKey==="menstrual"){
+        phaseNote = "En tu fase actual (" + phase.short + "), si tienes molestias, un gua sha muy suave en la zona lumbar o el abdomen (nunca sobre piel irritada) se usa tradicionalmente para relajar la zona.";
+      } else {
+        phaseNote = "En tu fase actual (" + phase.short + ") no hay una indicación especial: cualquier rutina general de gua sha es igual de válida.";
+      }
+    }
+    el.innerHTML =
+      '<p style="margin:0 0 12px; font-size:.87rem; color:var(--ink-soft); line-height:1.55;">' +
+        'El gua sha es una herramienta de borde liso con la que tradicionalmente se raspa suavemente la piel para, según la tradición, mover el Qi y estimular la circulación local.' +
+      '</p>' +
+      '<ul class="guasha-steps">' +
+        '<li>Limpia la piel y aplica un aceite o sérum para que la herramienta deslice sin tirar.</li>' +
+        '<li>Sujeta la herramienta con un ángulo de unos 15–30° sobre la piel.</li>' +
+        '<li>Desliza siempre hacia arriba y hacia fuera (del centro de la cara hacia las orejas, y hacia abajo por el cuello), con presión suave y constante — nunca dolorosa.</li>' +
+        '<li>De 5 a 7 pasadas por zona son suficientes; no hace falta presionar fuerte para que "funcione".</li>' +
+        '<li>Limpia la herramienta con agua y jabón después de cada uso.</li>' +
+      '</ul>' +
+      (phaseNote ? '<div class="guasha-note"><strong>Nota según tu fase:</strong> ' + phaseNote + '</div>' : '') +
+      '<div class="guasha-warn">Evítalo sobre piel irritada, heridas abiertas, quemaduras solares o várices, y consulta a un profesional si tienes dudas o alguna condición de coagulación. Frecuencia habitual: 2–3 veces por semana.</div>';
   }
 
   // ---------- season + moon (nota del día) ----------
