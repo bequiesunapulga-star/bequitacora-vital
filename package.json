@@ -1,0 +1,17 @@
+{
+  "name": "bequitacora-vital",
+  "version": "1.0.0",
+  "description": "Diario de salud personal: comidas, sueño, suplementos e informes médicos, con score general y estadísticas.",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  }
+}

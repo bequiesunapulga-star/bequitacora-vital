@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bequitacora Vital</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%BF%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header class="topbar">
+    <h1>Bequitacora Vital</h1>
+    <div class="date" id="todayLabel"></div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-view="hoy">Hoy</button>
+    <button role="tab" aria-selected="false" data-view="registrar">Registrar</button>
+    <button role="tab" aria-selected="false" data-view="stats">Estadísticas</button>
+    <button role="tab" aria-selected="false" data-view="mejoras">Mejoras</button>
+    <button role="tab" aria-selected="false" data-view="historial">Historial</button>
+  </nav>
+
+  <!-- HOY -->
+  <section class="view active" id="view-hoy">
+    <div class="grid dash">
+      <div class="card gauge-card">
+        <div class="label">Score general · 7 días</div>
+        <svg viewBox="0 0 220 130" width="220" height="130" id="gaugeSvg" aria-hidden="true">
+          <path d="M20,110 A90,90 0 0 1 200,110" fill="none" stroke="var(--fill-weak)" stroke-width="14" stroke-linecap="round"/>
+          <path id="gaugeArc" d="M20,110 A90,90 0 0 1 200,110" fill="none" stroke="var(--ink)" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 999"/>
+          <text id="gaugeNum" x="110" y="100" text-anchor="middle" font-family="Instrument Serif, serif" font-style="italic" font-size="46" fill="var(--ink)">--</text>
+          <text x="110" y="119" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" letter-spacing="1" fill="var(--ink-faint)">DE 100</text>
+        </svg>
+        <div class="sub" id="gaugeSub">Registra comidas, sueño, suplementos e informes para calcular tu score.</div>
+        <span class="tag" id="gaugePill" style="margin-top:2px;"></span>
+      </div>
+
+      <div class="cats" id="catTiles"></div>
+    </div>
+
+    <div id="alertBanner"></div>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="section-title">
+        <h2>Prioridades</h2>
+        <button class="btn link" id="goMejoras">Ver todas las mejoras →</button>
+      </div>
+      <ul class="tips-list" id="tipsList"></ul>
+    </div>
+  </section>
+
+  <!-- REGISTRAR -->
+  <section class="view" id="view-registrar">
+    <div class="subtabs" role="tablist">
+      <button role="tab" aria-selected="true" data-form="meal">Comida</button>
+      <button role="tab" aria-selected="false" data-form="sleep">Sueño</button>
+      <button role="tab" aria-selected="false" data-form="supplement">Suplemento</button>
+      <button role="tab" aria-selected="false" data-form="medical">Informe médico</button>
+    </div>
+
+    <div class="card">
+      <form class="entry-form active" id="form-meal" data-type="meals">
+        <div class="field-row">
+          <label>Fecha <input type="date" name="date" required></label>
+          <label>Hora <input type="time" name="time"></label>
+          <label>Tipo
+            <select name="mealType">
+              <option>Desayuno</option><option>Almuerzo</option><option>Comida</option>
+              <option>Merienda</option><option>Cena</option><option>Snack</option>
+            </select>
+          </label>
+        </div>
+        <label>¿Qué has comido? <textarea name="description" placeholder="Describe la comida con el detalle que quieras..." required></textarea></label>
+        <label>Calidad percibida
+          <span class="range-row"><input type="range" name="quality" min="1" max="5" value="3"><output>3</output></span>
+        </label>
+        <div><button type="submit" class="btn">Guardar comida</button></div>
+      </form>
+
+      <form class="entry-form" id="form-sleep" data-type="sleep">
+        <div class="field-row">
+          <label>Fecha (noche) <input type="date" name="date" required></label>
+          <label>Hora acostarse <input type="time" name="bedTime"></label>
+          <label>Hora despertar <input type="time" name="wakeTime"></label>
+          <label>Horas dormidas <input type="number" name="hours" min="0" max="16" step="0.25" required></label>
+        </div>
+        <label>Calidad del sueño
+          <span class="range-row"><input type="range" name="quality" min="1" max="5" value="3"><output>3</output></span>
+        </label>
+        <label>Notas <textarea name="notes" placeholder="Despertares, sueños, sensación al levantarte... (opcional)"></textarea></label>
+        <div><button type="submit" class="btn">Guardar sueño</button></div>
+      </form>
+
+      <form class="entry-form" id="form-supplement" data-type="supplements">
+        <div class="field-row">
+          <label>Fecha <input type="date" name="date" required></label>
+          <label>Hora <input type="time" name="time"></label>
+          <label>Suplemento <input type="text" name="name" placeholder="Ej. Vitamina D3" required></label>
+          <label>Dosis <input type="text" name="dose" placeholder="Ej. 2000 UI"></label>
+        </div>
+        <label>Notas <textarea name="notes" placeholder="Opcional"></textarea></label>
+        <div><button type="submit" class="btn">Guardar suplemento</button></div>
+      </form>
+
+      <form class="entry-form" id="form-medical" data-type="medical">
+        <div class="field-row">
+          <label>Fecha <input type="date" name="date" required></label>
+          <label>Tipo
+            <select name="type">
+              <option>Analítica</option><option>Consulta médica</option><option>Receta</option>
+              <option>Vacuna</option><option>Prueba diagnóstica</option><option>Otro</option>
+            </select>
+          </label>
+          <label>Título <input type="text" name="title" placeholder="Ej. Analítica general" required></label>
+        </div>
+        <label>Detalles / resultados <textarea name="notes" placeholder="Escribe aquí el informe, resultados, observaciones del médico..."></textarea></label>
+        <label style="flex-direction:row; align-items:center; gap:8px; text-transform:none; letter-spacing:0; font-family:'IBM Plex Sans',sans-serif; font-size:.88rem; color:var(--ink);">
+          <input type="checkbox" name="flag"> Requiere seguimiento
+        </label>
+        <div><button type="submit" class="btn">Guardar informe</button></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="view" id="view-stats">
+    <div class="stack-cards">
+      <div class="card chart-card">
+        <div class="chart-title">Sueño — horas y calidad · 14 días</div>
+        <canvas id="chartSleep" height="220"></canvas>
+      </div>
+      <div class="card chart-card">
+        <div class="chart-title">Calidad media de comidas por día · 14 días</div>
+        <canvas id="chartMeals" height="220"></canvas>
+      </div>
+      <div class="grid" style="grid-template-columns:1fr 1fr;">
+        <div class="card chart-card">
+          <div class="chart-title">Balance por categoría</div>
+          <canvas id="chartRadar" height="220"></canvas>
+        </div>
+        <div class="card chart-card">
+          <div class="chart-title">Constancia con suplementos · 28 días</div>
+          <div class="heat-grid" id="heatGrid"></div>
+          <div class="heat-legend"><span>Menos</span>
+            <span class="heat-cell" style="width:10px;height:10px;background:var(--fill-weak)"></span>
+            <span class="heat-cell" style="width:10px;height:10px;background:var(--fill-mid)"></span>
+            <span class="heat-cell" style="width:10px;height:10px;background:var(--fill-strong)"></span>
+            <span>Más</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MEJORAS -->
+  <section class="view" id="view-mejoras">
+    <div class="section-title">
+      <h2>Cómo mejorar</h2>
+    </div>
+    <div class="mejoras-cats" id="mejorasCats"></div>
+
+    <hr class="divider">
+
+    <div class="card">
+      <div class="section-title" style="margin-bottom:10px;">
+        <h2 style="font-size:1.15rem;">Consejo personalizado</h2>
+      </div>
+      <div style="color:var(--ink-soft); font-size:.85rem; margin-bottom:12px;">
+        Genera un consejo escrito a partir de tus registros reales de los últimos días.
+        <span class="mono" style="display:block; margin-top:6px; font-size:.72rem; color:var(--ink-faint);">
+          Disponible solo cuando esta página se abre dentro de Claude (usa la IA de tu cuenta). En el navegador local queda oculto.
+        </span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <button class="btn ghost" id="adviceBtn">Pedir consejo personalizado</button>
+        <span class="tag none" id="adviceStatus" style="display:none;"></span>
+      </div>
+      <div class="advice-box" id="adviceBox"></div>
+    </div>
+  </section>
+
+  <!-- HISTORIAL -->
+  <section class="view" id="view-historial">
+    <div class="filter-row" id="histFilters">
+      <button aria-pressed="true" data-filter="all">Todo</button>
+      <button aria-pressed="false" data-filter="meals">Comidas</button>
+      <button aria-pressed="false" data-filter="sleep">Sueño</button>
+      <button aria-pressed="false" data-filter="supplements">Suplementos</button>
+      <button aria-pressed="false" data-filter="medical">Médico</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
