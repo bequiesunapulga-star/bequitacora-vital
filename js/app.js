@@ -1221,5 +1221,26 @@
 
   document.getElementById("todayLabel").textContent = new Date().toLocaleDateString("es-ES", {weekday:"long", day:"numeric", month:"long"});
 
+  (function initStarfield(){
+    var bg = document.createElement("div");
+    bg.className = "stars-bg";
+    bg.setAttribute("aria-hidden", "true");
+    var count = window.innerWidth < 600 ? 36 : 64;
+    for(var i=0;i<count;i++){
+      var s = document.createElement("span");
+      s.className = "star";
+      var size = (Math.random()*1.6+0.6).toFixed(1);
+      s.style.width = size+"px";
+      s.style.height = size+"px";
+      s.style.left = (Math.random()*100).toFixed(2)+"%";
+      s.style.top = (Math.random()*100).toFixed(2)+"%";
+      s.style.setProperty("--dur", (Math.random()*3+3).toFixed(1)+"s");
+      s.style.setProperty("--delay", (Math.random()*4).toFixed(1)+"s");
+      s.style.opacity = (Math.random()*0.3+0.2).toFixed(2);
+      bg.appendChild(s);
+    }
+    document.body.insertBefore(bg, document.body.firstChild);
+  })();
+
   initStore();
 })();
